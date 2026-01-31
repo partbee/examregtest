@@ -537,6 +537,8 @@
 
             const scores = {};
             const subjectRows = document.querySelectorAll('table tbody tr');
+            let hasError = false;
+            let errorMessage = '';
             
             const padScore = (val) => {
                 if (!val && val !== 0) return '';
@@ -544,17 +546,50 @@
             };
 
             subjectRows.forEach(row => {
+                if (hasError) return;
+
                 const codeInput = row.querySelector('input[id$="__SubjectCode"]');
+                const nameInput = row.querySelector('input[id$="__SubjectName"]');
+                const subjectName = nameInput ? nameInput.value : 'Subject';
                 const y1Input = row.querySelector('input[id$="__Year1CassScore"]');
                 const y2Input = row.querySelector('input[id$="__Year2CassScore"]');
                 
-                if (codeInput && (y1Input.value || y2Input.value)) {
+                const y1Val = y1Input.value;
+                const y2Val = y2Input.value;
+
+                // 1) Check if all scores are entered
+                if (!y1Val || !y2Val) {
+                    hasError = true;
+                    errorMessage = `All scores for ${subjectName} must be entered.`;
+                    if (!y1Val) y1Input.focus();
+                    else y2Input.focus();
+                    return;
+                }
+
+                // 2) Check if scores are greater than 100
+                const y1Num = parseInt(y1Val, 10);
+                const y2Num = parseInt(y2Val, 10);
+
+                if (y1Num > 100 || y2Num > 100) {
+                    hasError = true;
+                    errorMessage = `Scores for ${subjectName} cannot be greater than 100.`;
+                    if (y1Num > 100) y1Input.focus();
+                    else y2Input.focus();
+                    return;
+                }
+                
+                if (codeInput) {
                     scores[codeInput.value] = {
-                        year1: padScore(y1Input.value),
-                        year2: padScore(y2Input.value)
+                        year1: padScore(y1Val),
+                        year2: padScore(y2Val)
                     };
                 }
             });
+
+            if (hasError) {
+                alert(errorMessage);
+                return;
+            }
 
             currentStudent.scores = scores;
 
